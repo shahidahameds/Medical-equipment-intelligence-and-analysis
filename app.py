@@ -5,9 +5,11 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+
 # =====================================================
 # PAGE CONFIGURATION
 # =====================================================
+
 st.set_page_config(
     page_title="MedEquip Intelligence",
     page_icon="🏥",
@@ -21,81 +23,198 @@ DEVICE_PATH = BASE_DIR / "devices-1681209661.csv"
 EVENT_PATH = BASE_DIR / "events-1681209680.csv"
 MANUFACTURER_PATH = BASE_DIR / "manufacturers-1681209657.csv"
 
+
 # =====================================================
-# PROFESSIONAL UI
+# PROFESSIONAL LIGHT UI
 # =====================================================
+
 st.markdown("""
 <style>
-@import url(
-'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'
-);
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 html, body, [class*="css"] {
-    font-family: Inter, sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
+/* Main background */
 .stApp {
-    background: #0b1120;
-    color: #e6edf7;
+    background-color: #F3F7FC;
+    color: #243B53;
 }
 
+/* Main content */
+.main .block-container {
+    background-color: #F3F7FC;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Sidebar */
 [data-testid="stSidebar"] {
-    background: #101a2d;
-    border-right: 1px solid #263650;
+    background-color: #E7EFF9;
+    border-right: 1px solid #D1DFEF;
 }
 
+/* Sidebar text */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: #183153 !important;
+}
+
+/* Main headings */
+.stApp h1,
+.stApp h2,
+.stApp h3 {
+    color: #15365B !important;
+    font-weight: 700;
+}
+
+/* General text */
+.stApp p,
+.stApp label,
+.stApp li {
+    color: #344B64;
+}
+
+/* Metric cards */
 [data-testid="stMetric"] {
-    background: linear-gradient(135deg, #17263d, #121d30);
-    border: 1px solid #2b3e59;
+    background: #FFFFFF;
+    border: 1px solid #D6E2F0;
     border-radius: 15px;
-    padding: 17px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(30, 64, 100, 0.06);
 }
 
+/* Metric labels */
 [data-testid="stMetricLabel"] {
-    color: #a8bad1;
+    color: #536B84 !important;
 }
 
+/* Metric values */
 [data-testid="stMetricValue"] {
-    color: #f3f7ff;
+    color: #123A63 !important;
+    font-weight: 700;
 }
 
+/* Hero section */
 .hero {
-    padding: 27px 30px;
+    padding: 30px;
     border-radius: 20px;
-    background: linear-gradient(120deg, #142a40, #1b2140);
-    border: 1px solid #2c4564;
-    margin-bottom: 22px;
+    background: linear-gradient(120deg, #DCEEFF, #E9EAFE);
+    border: 1px solid #C7D9F0;
+    margin-bottom: 25px;
 }
 
 .hero h1 {
-    color: #f4f8ff;
-    font-size: 31px;
+    color: #123A63 !important;
+    font-size: 32px;
+    font-weight: 800;
     margin: 0;
 }
 
 .hero p {
-    color: #b3c5dc;
-    margin: 9px 0 0 0;
+    color: #405F80 !important;
+    margin-top: 10px;
 }
 
-div[data-testid="stDataFrame"] {
-    border: 1px solid #293b56;
-    border-radius: 10px;
+/* Tables */
+[data-testid="stDataFrame"] {
+    background: #FFFFFF;
+    border: 1px solid #D6E2F0;
+    border-radius: 12px;
 }
 
-section[data-testid="stSidebar"] h1,
-section[data-testid="stSidebar"] h2,
-section[data-testid="stSidebar"] h3 {
-    color: #e5edf8;
+/* Buttons */
+.stButton button,
+.stDownloadButton button {
+    background-color: #1769AA;
+    color: #FFFFFF !important;
+    border: none;
+    border-radius: 9px;
+    font-weight: 600;
+    padding: 8px 15px;
 }
 
+.stButton button:hover,
+.stDownloadButton button:hover {
+    background-color: #10558D;
+    color: #FFFFFF !important;
+}
+
+/* Input fields */
+.stTextInput input,
+.stSelectbox div[data-baseweb="select"],
+.stMultiSelect div[data-baseweb="select"] {
+    background-color: #FFFFFF;
+    color: #183153;
+    border-color: #C9D8E8;
+}
+
+/* Captions */
+[data-testid="stCaptionContainer"] p,
 .small-note {
-    color: #9fb1c9;
+    color: #63778D !important;
     font-size: 13px;
+}
+
+/* Dividers */
+hr {
+    border-color: #D6E2F0;
 }
 
 </style>
 """, unsafe_allow_html=True)
+
+
+# =====================================================
+# PLOTLY LIGHT THEME
+# =====================================================
+
+px.defaults.template = "plotly_white"
+
+CHART_LAYOUT = {
+    "font": {
+        "family": "Inter",
+        "color": "#243B53",
+        "size": 12,
+    },
+    "paper_bgcolor": "rgba(0,0,0,0)",
+    "plot_bgcolor": "rgba(0,0,0,0)",
+    "margin": dict(l=10, r=10, t=25, b=10),
+}
+
+
+def style_chart(fig, height=None):
+    fig.update_layout(**CHART_LAYOUT)
+
+    fig.update_xaxes(
+        title_font_color="#243B53",
+        tickfont_color="#52677F",
+        gridcolor="#E1EAF3",
+        zerolinecolor="#D6E2F0",
+    )
+
+    fig.update_yaxes(
+        title_font_color="#243B53",
+        tickfont_color="#52677F",
+        gridcolor="#E1EAF3",
+        zerolinecolor="#D6E2F0",
+    )
+
+    if height:
+        fig.update_layout(height=height)
+
+    return fig
+
+
+# =====================================================
+# HERO SECTION
+# =====================================================
 
 st.markdown("""
 <div class="hero">
@@ -111,6 +230,7 @@ st.markdown("""
 # =====================================================
 # DATA LOADING
 # =====================================================
+
 @st.cache_data(show_spinner="Loading datasets...")
 def load_csv(path):
     return pd.read_csv(path, low_memory=False)
@@ -124,26 +244,35 @@ missing = [
 
 if missing:
     st.error("The following dataset files were not found:")
+
     for filename in missing:
         st.write(f"- {filename}")
+
     st.info("Place the CSV files beside app.py, then refresh the app.")
     st.stop()
+
 
 try:
     devices = load_csv(str(DEVICE_PATH))
     events = load_csv(str(EVENT_PATH))
     manufacturers = load_csv(str(MANUFACTURER_PATH))
+
 except Exception as exc:
     st.error(f"Dataset loading failed: {exc}")
     st.stop()
 
 
 # =====================================================
-# HELPERS
+# HELPER FUNCTIONS
 # =====================================================
+
 def find_column(df, candidates):
     """Find a column using case-insensitive candidate names."""
-    lookup = {str(c).strip().lower(): c for c in df.columns}
+
+    lookup = {
+        str(c).strip().lower(): c
+        for c in df.columns
+    }
 
     for candidate in candidates:
         if candidate.lower() in lookup:
@@ -161,26 +290,39 @@ def missing_report(df):
     }).sort_values("Missing (%)", ascending=False)
 
 
-device_id_col = find_column(devices, ["id", "device_id"])
+# =====================================================
+# COLUMN DETECTION
+# =====================================================
+
+device_id_col = find_column(
+    devices, ["id", "device_id"]
+)
+
 event_device_col = find_column(
     events, ["device_id", "device id", "deviceid"]
 )
+
 reason_col = find_column(
     events, ["reason", "event_reason", "event_type"]
 )
+
 risk_col = find_column(
     devices, ["risk_class", "risk class", "risk"]
 )
+
 classification_col = find_column(
     devices, ["classification", "device_class", "device type"]
 )
+
 manufacturer_id_col = find_column(
     devices, ["manufacturer_id", "manufacturer id", "manufacturerid"]
 )
+
 manufacturer_name_col = find_column(
     manufacturers,
     ["name", "manufacturer_name", "company_name", "manufacturer"],
 )
+
 manufacturer_table_id_col = find_column(
     manufacturers, ["id", "manufacturer_id", "manufacturer id"]
 )
@@ -189,9 +331,12 @@ manufacturer_table_id_col = find_column(
 # =====================================================
 # SIDEBAR
 # =====================================================
+
 with st.sidebar:
+
     st.markdown("## 🩺 MedEquip")
     st.caption("Analytics workspace")
+
     st.divider()
 
     page = st.radio(
@@ -206,13 +351,14 @@ with st.sidebar:
     )
 
     st.divider()
+
     st.markdown("### Dataset status")
 
     st.write(f"Devices: **{len(devices):,}**")
     st.write(f"Events: **{len(events):,}**")
     st.write(f"Manufacturers: **{len(manufacturers):,}**")
 
-    if st.button("Refresh datasets", use_container_width=True):
+    if st.button("🔄 Refresh datasets", width="stretch"):
         st.cache_data.clear()
         st.rerun()
 
@@ -220,8 +366,11 @@ with st.sidebar:
 # =====================================================
 # OVERVIEW
 # =====================================================
+
 if page == "Overview":
+
     st.subheader("Dashboard Overview")
+
     st.caption("Summary generated from your actual CSV files.")
 
     c1, c2, c3, c4 = st.columns(4)
@@ -233,10 +382,14 @@ if page == "Overview":
 
     left, right = st.columns(2)
 
+    # Equipment classification
+
     with left:
+
         st.markdown("### Equipment classification")
 
         if classification_col:
+
             counts = (
                 devices[classification_col]
                 .fillna("Unknown")
@@ -252,27 +405,30 @@ if page == "Overview":
                 x="Records",
                 y="Classification",
                 orientation="h",
-                template="plotly_dark",
                 color="Records",
-                color_continuous_scale="Teal",
+                color_continuous_scale="Blues",
             )
 
             fig.update_layout(
-                height=400,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
                 coloraxis_showscale=False,
                 yaxis={"categoryorder": "total ascending"},
-                margin=dict(l=10, r=10, t=25, b=10),
             )
-            st.plotly_chart(fig, use_container_width=True)
+
+            style_chart(fig, 400)
+
+            st.plotly_chart(fig, width="stretch")
+
         else:
             st.info("No classification column was detected.")
 
+    # Device risk classes
+
     with right:
+
         st.markdown("### Device risk classes")
 
         if risk_col:
+
             risk_counts = (
                 devices[risk_col]
                 .fillna("Unknown")
@@ -287,23 +443,26 @@ if page == "Overview":
                 names="Risk class",
                 values="Records",
                 hole=0.60,
-                template="plotly_dark",
                 color_discrete_sequence=px.colors.qualitative.Set2,
             )
+
             fig.update_layout(
                 height=400,
-                paper_bgcolor="rgba(0,0,0,0)",
-                margin=dict(l=10, r=10, t=25, b=10),
                 legend=dict(orientation="h", y=-0.12),
             )
-            st.plotly_chart(fig, use_container_width=True)
+
+            style_chart(fig)
+
+            st.plotly_chart(fig, width="stretch")
+
         else:
             st.info("No risk-class column was detected.")
 
     st.markdown("### Recent device records")
+
     st.dataframe(
         devices.head(10),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -312,27 +471,35 @@ if page == "Overview":
         data=devices.to_csv(index=False).encode("utf-8"),
         file_name="devices_export.csv",
         mime="text/csv",
+        width="stretch",
     )
 
 
 # =====================================================
 # EQUIPMENT EXPLORER
 # =====================================================
+
 elif page == "Equipment Explorer":
+
     st.subheader("Equipment Explorer")
-    st.caption("Search, filter, inspect, and export equipment records.")
+
+    st.caption(
+        "Search, filter, inspect, and export equipment records."
+    )
 
     filtered = devices.copy()
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
+
         query = st.text_input(
             "Search all fields",
             placeholder="Enter device ID, manufacturer, or keyword...",
         )
 
     with col2:
+
         max_rows = st.selectbox(
             "Maximum displayed rows",
             [100, 500, 1000, 5000],
@@ -340,8 +507,12 @@ elif page == "Equipment Explorer":
         )
 
     if risk_col:
+
         risk_options = sorted(
-            devices[risk_col].fillna("Unknown").astype(str).unique()
+            devices[risk_col]
+            .fillna("Unknown")
+            .astype(str)
+            .unique()
         )
 
         selected_risks = st.multiselect(
@@ -351,27 +522,35 @@ elif page == "Equipment Explorer":
         )
 
         if selected_risks:
+
             filtered = filtered[
-                filtered[risk_col].fillna("Unknown").astype(str).isin(
-                    selected_risks
-                )
+                filtered[risk_col]
+                .fillna("Unknown")
+                .astype(str)
+                .isin(selected_risks)
             ]
 
     if query.strip():
-        # Search all columns without modifying the source data.
+
         mask = filtered.astype(str).apply(
             lambda col: col.str.contains(
-                query.strip(), case=False, na=False, regex=False
+                query.strip(),
+                case=False,
+                na=False,
+                regex=False,
             )
         ).any(axis=1)
 
         filtered = filtered[mask]
 
-    st.metric("Matching equipment records", f"{len(filtered):,}")
+    st.metric(
+        "Matching equipment records",
+        f"{len(filtered):,}",
+    )
 
     st.dataframe(
         filtered.head(max_rows),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
@@ -380,24 +559,30 @@ elif page == "Equipment Explorer":
         data=filtered.to_csv(index=False).encode("utf-8"),
         file_name="filtered_equipment.csv",
         mime="text/csv",
+        width="stretch",
     )
 
 
 # =====================================================
 # EVENT ANALYTICS
 # =====================================================
+
 elif page == "Event Analytics":
+
     st.subheader("Historical Event Analytics")
+
     st.caption(
         "These records describe reported events. A report does not by itself "
         "establish that the device caused the event."
     )
 
     a, b = st.columns(2)
+
     a.metric("Total event records", f"{len(events):,}")
     b.metric("Event attributes", f"{len(events.columns):,}")
 
     if reason_col:
+
         reason_counts = (
             events[reason_col]
             .fillna("Unknown")
@@ -415,20 +600,18 @@ elif page == "Event Analytics":
             x="Records",
             y="Reported reason",
             orientation="h",
-            template="plotly_dark",
             color="Records",
-            color_continuous_scale="Teal",
+            color_continuous_scale="Blues",
         )
 
         fig.update_layout(
-            height=560,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
             coloraxis_showscale=False,
             yaxis={"categoryorder": "total ascending"},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        style_chart(fig, 560)
+
+        st.plotly_chart(fig, width="stretch")
 
         st.markdown("### Filter events")
 
@@ -447,17 +630,21 @@ elif page == "Event Analytics":
         filtered_events = events
 
         if chosen_reasons:
+
             filtered_events = events[
-                events[reason_col].fillna("Unknown").astype(str).isin(
-                    chosen_reasons
-                )
+                events[reason_col]
+                .fillna("Unknown")
+                .astype(str)
+                .isin(chosen_reasons)
             ]
 
-        st.write(f"Matching event records: {len(filtered_events):,}")
+        st.write(
+            f"Matching event records: {len(filtered_events):,}"
+        )
 
         st.dataframe(
             filtered_events.head(500),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -466,30 +653,42 @@ elif page == "Event Analytics":
             data=filtered_events.to_csv(index=False).encode("utf-8"),
             file_name="filtered_events.csv",
             mime="text/csv",
+            width="stretch",
         )
+
     else:
+
         st.warning(
             "No recognized event-reason column was found. "
             "Review the available columns below."
         )
 
     with st.expander("Inspect event columns"):
+
         st.write(events.columns.tolist())
-        st.dataframe(events.head(20), use_container_width=True)
+
+        st.dataframe(
+            events.head(20),
+            width="stretch",
+        )
 
 
 # =====================================================
 # MANUFACTURER ANALYTICS
 # =====================================================
+
 elif page == "Manufacturer Analytics":
+
     st.subheader("Manufacturer Analytics")
 
     left, right = st.columns(2)
 
     with left:
+
         st.markdown("### Manufacturer registry")
 
         if manufacturer_name_col:
+
             manufacturer_counts = (
                 manufacturers[manufacturer_name_col]
                 .fillna("Unknown")
@@ -505,35 +704,38 @@ elif page == "Manufacturer Analytics":
                 x="Records",
                 y="Manufacturer",
                 orientation="h",
-                template="plotly_dark",
                 color="Records",
-                color_continuous_scale="Teal",
+                color_continuous_scale="Blues",
             )
 
             fig.update_layout(
-                height=470,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
                 coloraxis_showscale=False,
                 yaxis={"categoryorder": "total ascending"},
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            style_chart(fig, 470)
+
+            st.plotly_chart(fig, width="stretch")
+
         else:
+
             st.info(
                 "No manufacturer-name column detected. "
                 "You can still explore the full registry below."
             )
 
     with right:
+
         st.markdown("### Registry preview")
+
         st.dataframe(
             manufacturers.head(20),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
     if manufacturer_id_col and manufacturer_table_id_col:
+
         st.markdown("### Device records by manufacturer")
 
         device_counts = (
@@ -548,7 +750,7 @@ elif page == "Manufacturer Analytics":
 
         st.dataframe(
             device_counts,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 
@@ -557,15 +759,21 @@ elif page == "Manufacturer Analytics":
         data=manufacturers.to_csv(index=False).encode("utf-8"),
         file_name="manufacturers_export.csv",
         mime="text/csv",
+        width="stretch",
     )
 
 
 # =====================================================
 # DATA QUALITY
 # =====================================================
+
 elif page == "Data Quality":
+
     st.subheader("Data Quality Center")
-    st.caption("Inspect missing values, duplicates, and dataset structure.")
+
+    st.caption(
+        "Inspect missing values, duplicates, and dataset structure."
+    )
 
     dataset_choice = st.selectbox(
         "Select a dataset",
@@ -579,64 +787,83 @@ elif page == "Data Quality":
     }
 
     selected_df = dataset_map[dataset_choice]
+
     report = missing_report(selected_df)
 
     c1, c2, c3 = st.columns(3)
 
     c1.metric("Rows", f"{len(selected_df):,}")
     c2.metric("Columns", f"{len(selected_df.columns):,}")
-    c3.metric("Duplicate rows", f"{selected_df.duplicated().sum():,}")
+    c3.metric(
+        "Duplicate rows",
+        f"{selected_df.duplicated().sum():,}",
+    )
 
     st.markdown("### Missing values by column")
 
-    missing_chart = report[report["Missing values"] > 0].head(20)
+    missing_chart = report[
+        report["Missing values"] > 0
+    ].head(20)
 
     if not missing_chart.empty:
+
         fig = px.bar(
             missing_chart,
             x="Missing (%)",
             y="Column",
             orientation="h",
-            template="plotly_dark",
             color="Missing (%)",
-            color_continuous_scale="Teal",
+            color_continuous_scale="Blues",
         )
 
         fig.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
             coloraxis_showscale=False,
             yaxis={"categoryorder": "total ascending"},
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        style_chart(fig)
+
+        st.plotly_chart(fig, width="stretch")
+
     else:
-        st.success("No missing values were found in this dataset.")
+
+        st.success(
+            "No missing values were found in this dataset."
+        )
 
     st.markdown("### Column report")
-    st.dataframe(report, use_container_width=True, hide_index=True)
+
+    st.dataframe(
+        report,
+        width="stretch",
+        hide_index=True,
+    )
 
     st.download_button(
         "⬇ Download data quality report",
         data=report.to_csv(index=False).encode("utf-8"),
         file_name=f"{dataset_choice.lower()}_quality_report.csv",
         mime="text/csv",
+        width="stretch",
     )
 
     with st.expander("View dataset column names"):
+
         st.write(selected_df.columns.tolist())
+
 
 # =====================================================
 # FOOTER
 # =====================================================
+
 st.divider()
 
 st.markdown(
     """
     <p class="small-note">
-    MedEquip Intelligence · Educational analytics prototype.
-    Historical adverse-event records are not validated forecasts
-    of future equipment failures.
+        MedEquip Intelligence · Educational analytics prototype.
+        Historical adverse-event records are not validated forecasts
+        of future equipment failures.
     </p>
     """,
     unsafe_allow_html=True,
