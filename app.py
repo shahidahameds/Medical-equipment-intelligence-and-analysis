@@ -1,6 +1,8 @@
 
 from pathlib import Path
+import json
 
+import joblib
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -22,6 +24,13 @@ BASE_DIR = Path(__file__).resolve().parent
 DEVICE_PATH = BASE_DIR / "devices-1681209661.csv"
 EVENT_PATH = BASE_DIR / "events-1681209680.csv"
 MANUFACTURER_PATH = BASE_DIR / "manufacturers-1681209657.csv"
+
+# Trained model artifacts (created by main.py/train_model.py)
+MODEL_DIR = BASE_DIR / "main.py" / "models"
+MODEL_PATH = MODEL_DIR / "random_forest_pipeline.joblib"
+MODEL_METADATA_PATH = MODEL_DIR / "model_metadata.json"
+MODEL_METRICS_PATH = MODEL_DIR / "model_metrics.csv"
+FEATURE_IMPORTANCE_PATH = MODEL_DIR / "feature_importance.csv"
 
 
 # =====================================================
@@ -347,6 +356,7 @@ with st.sidebar:
             "Event Analytics",
             "Manufacturer Analytics",
             "Data Quality",
+            "Failure Prediction",
         ],
     )
 
@@ -850,6 +860,232 @@ elif page == "Data Quality":
     with st.expander("View dataset column names"):
 
         st.write(selected_df.columns.tolist())
+
+
+# =====================================================
+# FAILURE PREDICTION
+# =====================================================
+
+elif page == "Failure Prediction":
+
+    st.subheader("Medical Equipment Failure Analysis & Prediction")
+    st.caption(
+        "Experimental machine-learning classification using the trained "
+        "Random Forest pipeline."
+    )
+
+    st.warning(
+        "**Important limitation:** This model classifies whether a device "
+        "matches the dataset's historical 'device failure' event label. "
+        "It does not forecast a verified future failure or establish causation. "
+        "Group validation on unseen manufacturers was poor, so predictions "
+        "must not be used for clinical, maintenance, purchasing, or safety decisions."
+    )
+
+    if not MODEL_PATH.exists():
+        st.error(f"Trained model not found: {MODEL_PATH}")
+        st.info(
+            "Run the training script first from the project folder: "
+            "`python main.py/train_model.py`"
+        )
+        st.stop()
+
+    @st.cache_resource
+    def load_failure_model(model_path, metadata_path):
+        model = joblib.load(model_path)
+        metadata = {}
+        if Path(metadata_path).exists():
+            with open(metadata_path, "r", encoding="utf-8") as file:
+                metadata = json.load(file)
+        return model, metadata
+
+    try:
+        model, model_metadata = load_failure_model(
+            str(MODEL_PATH), str(MODEL_METADATA_PATH)
+        )
+    except Exception as exc:
+        st.error(f"Could not load the trained model: {exc}")
+        st.stop()
+
+    threshold = float(model_metadata.get("decision_threshold", 0.8))
+
+    st.markdown("### Model evaluation")
+    metric_cols = st.columns(5)
+    benchmark_metrics = [
+        ("Test accuracy", "98.85%"),
+        ("Test precision", "93.71%"),
+        ("Test recall", "38.68%"),
+        ("Test F1-score", "54.76%"),
+        ("Test ROC-AUC", "0.9076"),
+    ]
+    for col, (label, value) in zip(metric_cols, benchmark_metrics):
+        col.metric(label, value)
+
+    st.caption(
+        f"Decision threshold selected using validation data: **{threshold:.2f}**. "
+        "The figures above are the recorded random-split test results."
+    )
+
+    st.markdown("### Enter equipment details")
+    st.write(
+        "Provide the five input features used during training. "
+        "Choose a manufacturer ID that exists in the device dataset."
+    )
+
+    def available_values(series):
+        values = series.dropna().drop_duplicates().tolist()
+        return sorted(values, key=lambda value: str(value))
+
+    input_col1, input_col2 = st.columns(2)
+
+    with input_col1:
+        if "classification" not in devices.columns:
+            st.error("Required device column 'classification' is missing.")
+            st.stop()
+        classification_values = available_values(devices["classification"])
+        if not classification_values:
+            st.error("No classification values are available.")
+            st.stop()
+        selected_classification = st.selectbox(
+            "Equipment classification", classification_values
+        )
+
+        if "implanted" not in devices.columns:
+            st.error("Required device column 'implanted' is missing.")
+            st.stop()
+        implanted_values = available_values(devices["implanted"])
+        if not implanted_values:
+            st.error("No implanted values are available.")
+            st.stop()
+        selected_implanted = st.selectbox("Implanted", implanted_values)
+
+        if "quantity_in_commerce" not in devices.columns:
+            st.error("Required device column 'quantity_in_commerce' is missing.")
+            st.stop()
+        quantity_series = pd.to_numeric(
+            devices["quantity_in_commerce"], errors="coerce"
+        )
+        quantity_median = quantity_series.median()
+        if pd.isna(quantity_median):
+            quantity_median = 0.0
+        selected_quantity = st.number_input(
+            "Quantity in commerce",
+            min_value=0.0,
+            value=float(max(0, quantity_median)),
+            step=1.0,
+        )
+
+    with input_col2:
+        if "risk_class" not in devices.columns:
+            st.error("Required device column 'risk_class' is missing.")
+            st.stop()
+        risk_values = available_values(devices["risk_class"])
+        if not risk_values:
+            st.error("No risk-class values are available.")
+            st.stop()
+        selected_risk = st.selectbox("Risk class", risk_values)
+
+        if "manufacturer_id" not in devices.columns:
+            st.error("Required device column 'manufacturer_id' is missing.")
+            st.stop()
+        manufacturer_values = available_values(devices["manufacturer_id"])
+        if not manufacturer_values:
+            st.error("No manufacturer IDs are available.")
+            st.stop()
+
+        manufacturer_lookup = {str(value): value for value in manufacturer_values}
+        common_manufacturers = (
+            devices["manufacturer_id"].dropna().astype(str).value_counts().head(20).index.tolist()
+        )
+        default_manufacturer = common_manufacturers[0] if common_manufacturers else str(manufacturer_values[0])
+        manufacturer_text = st.text_input(
+            "Manufacturer ID",
+            value=default_manufacturer,
+            help="Enter an existing manufacturer ID from the device dataset.",
+        ).strip()
+
+    if st.button("Analyze equipment", type="primary", width="stretch"):
+        if manufacturer_text not in manufacturer_lookup:
+            st.error(
+                "This manufacturer ID is not present in the device dataset. "
+                "Enter a valid existing manufacturer ID."
+            )
+        else:
+            prediction_input = pd.DataFrame([{
+                "classification": selected_classification,
+                "implanted": selected_implanted,
+                "quantity_in_commerce": selected_quantity,
+                "risk_class": selected_risk,
+                "manufacturer_id": manufacturer_lookup[manufacturer_text],
+            }])
+
+            try:
+                historical_label_score = float(model.predict_proba(prediction_input)[0][1])
+                predicted_label = int(historical_label_score >= threshold)
+
+                st.markdown("### Model result")
+                result_col1, result_col2 = st.columns(2)
+                result_col1.metric(
+                    "Historical-label score",
+                    f"{historical_label_score:.1%}",
+                )
+                result_col2.metric(
+                    "Model classification",
+                    "Matches historical failure label" if predicted_label else
+                    "Does not match historical failure label",
+                )
+
+                st.progress(min(max(historical_label_score, 0.0), 1.0))
+                st.caption(
+                    f"The model compares the score with the validation-selected "
+                    f"threshold of {threshold:.2f}. This score is not a calibrated "
+                    "probability of future physical failure."
+                )
+
+                st.markdown("### Submitted equipment details")
+                st.dataframe(prediction_input, hide_index=True, width="stretch")
+
+            except Exception as exc:
+                st.error(f"Prediction could not be completed: {exc}")
+
+    st.markdown("### Feature importance")
+    if FEATURE_IMPORTANCE_PATH.exists():
+        try:
+            importance_df = pd.read_csv(FEATURE_IMPORTANCE_PATH)
+            st.dataframe(
+                importance_df.head(15),
+                width="stretch",
+                hide_index=True,
+            )
+        except Exception as exc:
+            st.info(f"Feature importance could not be loaded: {exc}")
+    else:
+        st.info(
+            "Feature-importance file was not found. It will appear after "
+            "the training script generates it."
+        )
+
+    st.markdown("### Generalization warning")
+    st.error(
+        "The separate manufacturer-group test showed very weak performance "
+        "on manufacturers not represented in training (ROC-AUC 0.6242; "
+        "precision 2.54%; recall 98.86% at its selected threshold). "
+        "This indicates that the random-split results do not reliably transfer "
+        "to unseen manufacturers. Treat this page as a research demonstration only."
+    )
+
+    with st.expander("How this model was trained"):
+        st.write(
+            "- Algorithm: Random Forest classifier with class balancing.\n"
+            "- Inputs: classification, implanted, quantity in commerce, "
+            "risk class, and manufacturer ID.\n"
+            "- Target: at least one linked event whose reason contains "
+            "'device failure'.\n"
+            "- Data split: stratified training, validation, and test sets.\n"
+            "- Decision threshold: selected using validation F1-score.\n"
+            "- The target represents a historical event label, not a verified "
+            "future device failure."
+        )
 
 
 # =====================================================

@@ -1,0 +1,26 @@
+{
+    "model_name": "Random Forest",
+    "target": "Explicit device failure event",
+    "target_definition": "A device is labelled 1 if at least one linked event reason contains 'device failure', case-insensitively; otherwise 0.",
+    "features": [
+        "classification",
+        "implanted",
+        "quantity_in_commerce",
+        "risk_class",
+        "manufacturer_id"
+    ],
+    "decision_threshold": 0.8,
+    "training_samples": 70949,
+    "validation_samples": 23650,
+    "testing_samples": 23650,
+    "positive_devices": 2118,
+    "negative_devices": 116131,
+    "metrics": {
+        "Accuracy": 0.9885412262156448,
+        "Precision": 0.9371428571428572,
+        "Recall": 0.3867924528301887,
+        "F1 Score": 0.5475792988313857,
+        "ROC AUC": 0.9075855234618326,
+        "PR AUC": 0.4162661901046415
+    }
+}

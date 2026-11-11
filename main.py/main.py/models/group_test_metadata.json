@@ -1,0 +1,18 @@
+{
+    "model": "Random Forest",
+    "evaluation": "Manufacturer-group holdout",
+    "features": [
+        "classification",
+        "implanted",
+        "quantity_in_commerce",
+        "risk_class",
+        "manufacturer_id"
+    ],
+    "decision_threshold": 0.3,
+    "training_manufacturers": 19029,
+    "validation_manufacturers": 6343,
+    "testing_manufacturers": 6344,
+    "training_devices": 69981,
+    "validation_devices": 25467,
+    "testing_devices": 22801
+}
